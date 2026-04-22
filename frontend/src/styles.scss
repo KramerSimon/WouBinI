@@ -1,0 +1,233 @@
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap');
+
+:root {
+	--forest-900: #1f3a33;
+	--forest-700: #2f594f;
+	--stone-100: #f6f2ea;
+	--stone-200: #ece5d8;
+	--ink-900: #1c2624;
+	--ink-600: #45534f;
+	--sky-500: #4f9ecf;
+	--sky-100: #dff1fa;
+	--terracotta-500: #c06a4f;
+	--shadow-soft: 0 14px 30px rgba(24, 46, 42, 0.12);
+	--radius-lg: 18px;
+	--radius-md: 12px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+}
+
+body {
+	font-family: 'Manrope', sans-serif;
+	color: var(--ink-900);
+	background:
+		radial-gradient(circle at 8% -2%, rgba(79, 158, 207, 0.16), transparent 38%),
+		radial-gradient(circle at 96% 6%, rgba(192, 106, 79, 0.14), transparent 34%),
+		linear-gradient(180deg, #f4efe5 0%, var(--stone-100) 100%);
+}
+
+h1,
+h2,
+h3 {
+	font-family: 'Fraunces', serif;
+	letter-spacing: 0.01em;
+}
+
+button,
+input,
+select {
+	font: inherit;
+}
+
+.hero-section {
+	padding: 14px 14px 6px;
+}
+
+.hero-card {
+	border-radius: var(--radius-lg);
+	border: 1px solid rgba(31, 58, 51, 0.16);
+	background:
+		radial-gradient(circle at 90% 10%, rgba(79, 158, 207, 0.18), transparent 32%),
+		radial-gradient(circle at 10% 90%, rgba(192, 106, 79, 0.14), transparent 34%),
+		linear-gradient(125deg, rgba(252, 250, 245, 0.96), rgba(245, 239, 227, 0.94));
+	box-shadow: var(--shadow-soft);
+	padding: 18px;
+}
+
+.hero-kicker {
+	margin: 0 0 6px;
+	font-size: 0.78rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-600);
+}
+
+.hero-card h2 {
+	margin: 0;
+	color: var(--forest-900);
+	font-size: clamp(1.55rem, 2.5vw, 2.1rem);
+}
+
+.hero-card p {
+	margin: 8px 0 0;
+	color: var(--ink-600);
+}
+
+.hero-actions {
+	margin-top: 12px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.hero-actions a {
+	color: var(--forest-700);
+	font-weight: 600;
+	text-decoration: underline;
+}
+
+.lower-section {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	padding: 6px 14px 20px;
+}
+
+.lower-card {
+	border-radius: var(--radius-md);
+	border: 1px solid rgba(31, 58, 51, 0.16);
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: 0 8px 16px rgba(24, 46, 42, 0.08);
+	padding: 12px;
+}
+
+.lower-card h3 {
+	margin: 0;
+	color: var(--forest-900);
+}
+
+.lower-card p {
+	margin: 6px 0 0;
+	color: var(--ink-600);
+	font-size: 0.9rem;
+}
+
+.user-location-marker {
+	width: 22px;
+	height: 22px;
+}
+
+.user-location-marker .dot {
+	position: relative;
+	display: block;
+	width: 14px;
+	height: 14px;
+	margin: 4px;
+	border-radius: 50%;
+	background: #2f84d0;
+	border: 2px solid #ffffff;
+	box-shadow: 0 0 0 8px rgba(47, 132, 208, 0.22);
+	animation: user-pulse 1.8s ease-out infinite;
+}
+
+.hotel-marker {
+	position: relative;
+	display: block;
+	width: 24px;
+	height: 24px;
+	border-radius: 50% 50% 50% 0;
+	background: #2f594f;
+	border: 2px solid rgba(255, 255, 255, 0.92);
+	box-shadow: 0 6px 14px rgba(25, 46, 42, 0.28);
+	transform: rotate(-45deg);
+	transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.hotel-marker::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #fff;
+	transform: translate(-50%, -50%);
+}
+
+.hotel-marker.selected {
+	width: 28px;
+	height: 28px;
+	background: #c06a4f;
+	transform: rotate(-45deg) scale(1.05);
+	box-shadow: 0 0 0 5px rgba(192, 106, 79, 0.22), 0 8px 18px rgba(25, 46, 42, 0.34);
+}
+
+.hotel-cluster-icon {
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: rgba(47, 89, 79, 0.92);
+	border: 2px solid rgba(255, 255, 255, 0.88);
+	box-shadow: 0 5px 14px rgba(24, 46, 42, 0.24);
+	color: #fff;
+	font-family: 'Manrope', sans-serif;
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.hotel-cluster-icon span {
+	line-height: 1;
+}
+
+.hotel-tooltip {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 600;
+	border-radius: 8px;
+	box-shadow: 0 8px 18px rgba(20, 38, 35, 0.2);
+}
+
+
+@keyframes user-pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(47, 132, 208, 0.35);
+	}
+	70% {
+		box-shadow: 0 0 0 12px rgba(47, 132, 208, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(47, 132, 208, 0);
+	}
+}
+
+@media (max-width: 960px) {
+	.hero-section,
+	.hotel-app,
+	.lower-section {
+		padding-left: 8px;
+		padding-right: 8px;
+	}
+
+	.hero-actions {
+		flex-wrap: wrap;
+	}
+
+	.lower-section {
+		grid-template-columns: 1fr;
+	}
+}

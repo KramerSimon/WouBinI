@@ -1,0 +1,227 @@
+<section class="hero-section">
+  <div class="hero-card">
+    <p class="hero-kicker">WouBinI</p>
+    <h2>{{ copy().heroTitle }}</h2>
+    <p>{{ copy().heroSubtitle }}</p>
+    <div class="hero-actions">
+      <button type="button" (click)="useMyLocation()" [disabled]="isLocating()">
+        {{ isLocating() ? copy().locating : copy().heroCta }}
+      </button>
+      <a href="#map-app">Open map app</a>
+    </div>
+  </div>
+</section>
+
+<section class="hotel-app" id="map-app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>WouBinI</h1>
+      <p>{{ copy().siteSubtitle }}</p>
+    </div>
+
+    <div class="search-wrap">
+      <mat-form-field appearance="outline" class="search-field">
+        <input
+          matInput
+          type="search"
+          [value]="store.filters().search"
+          (input)="onSearchInput($event)"
+          [placeholder]="copy().searchPlaceholder"
+          [attr.aria-label]="copy().searchAria"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="useMyLocation()" [disabled]="isLocating()">
+        {{ isLocating() ? copy().locating : copy().useMyLocation }}
+      </button>
+      <button type="button" class="ghost" (click)="cycleLanguage()">{{ languageLabel() }}</button>
+      <button type="button" class="ghost mobile-only" (click)="openMobileFilters()">{{ copy().filters }}</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <aside class="results-panel" [style.transform]="'translateY(' + sheetOffsetPx() + 'px)'">
+      <button
+        type="button"
+        class="drag-handle"
+        (pointerdown)="onSheetDragStart($event)"
+        (pointermove)="onSheetDragMove($event)"
+        (pointerup)="onSheetDragEnd()"
+        (pointercancel)="onSheetDragEnd()"
+        (click)="toggleMobileSheet()"
+        aria-label="Toggle results panel"
+      >
+        <span></span>
+      </button>
+
+      <section class="quick-filters">
+        <p class="location-label">
+          {{ store.userLocation() ? copy().nearUser : copy().nearBolzano }}
+        </p>
+        <p class="hotel-count">{{ store.hotels().length }} {{ copy().hotelsNearby }}</p>
+
+        <div class="chips">
+          @for (radius of radii; track radius) {
+            <button
+              type="button"
+              [class.active]="store.filters().radiusKm === radius"
+              (click)="onRadiusChange(radius)"
+            >
+              {{ radius }} km
+            </button>
+          }
+        </div>
+
+        <div class="select-row">
+          <mat-form-field appearance="outline" class="compact-field">
+            <mat-label>{{ copy().category }}</mat-label>
+            <mat-select [ngModel]="store.filters().category" (ngModelChange)="onCategoryChange($event)">
+              @for (option of categoryOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="compact-field">
+            <mat-label>{{ copy().sort }}</mat-label>
+            <mat-select [ngModel]="store.filters().sort" (ngModelChange)="onSortChange($event)">
+              @for (option of sortOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        @if (store.warning()) {
+          <p class="warning">{{ store.warning() }}</p>
+        }
+        @if (store.error()) {
+          <p class="error">{{ store.error() }}</p>
+        }
+      </section>
+
+      <section class="cards" aria-label="Hotels list">
+        @if (store.loading()) {
+          <p class="state-text">{{ copy().loadingHotels }}</p>
+        }
+
+        @if (!store.loading() && store.hotels().length === 0) {
+          <p class="state-text">{{ copy().noHotels }}</p>
+        }
+
+        @for (hotel of store.hotels(); track hotel.id) {
+          <article
+            class="hotel-card"
+            [class.selected]="store.selectedHotelId() === hotel.id"
+            (click)="selectHotel(hotel)"
+          >
+            @if (hotel.imageUrl) {
+              <img class="card-photo" [src]="hotel.imageUrl" [alt]="hotel.name" loading="lazy" />
+            }
+            <div class="card-main">
+              <h3>{{ hotel.name }}</h3>
+              <p>{{ hotel.town }} • {{ hotel.type }}</p>
+              <p>{{ hotel.distanceKm.toFixed(1) }} {{ copy().kmAway }}</p>
+            </div>
+            <div class="tags">
+              @for (tag of hotel.tags; track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+            <div class="card-actions">
+              <button type="button" (click)="routeToHotel(hotel); $event.stopPropagation()">{{ copy().route }}</button>
+              <button type="button" class="ghost" (click)="openDetails(hotel); $event.stopPropagation()">{{ copy().details }}</button>
+            </div>
+            @if (store.selectedHotelId() === hotel.id) {
+              <span class="selected-pill">{{ copy().selected }}</span>
+            }
+          </article>
+        }
+      </section>
+
+      @if (detailsOpen()) {
+        @if (selectedHotel(); as selected) {
+          <section class="details-drawer" #detailsDrawer>
+            <div class="details-header">
+              <h3>{{ selected.name }}</h3>
+              <button type="button" class="ghost" (click)="closeDetails()">{{ copy().close }}</button>
+            </div>
+            <p>{{ selected.address || copy().addressUnavailable }}</p>
+            <p>{{ selected.description || copy().descriptionUnavailable }}</p>
+            <p>{{ selected.phone || copy().phoneUnavailable }}</p>
+            @if (selected.website) {
+              <p><a [href]="selected.website" target="_blank" rel="noreferrer">{{ copy().website }}</a></p>
+            }
+
+            @if (routeSummary(); as route) {
+              <div class="route-summary">
+                <mat-button-toggle-group
+                  [ngModel]="routeMode()"
+                  (ngModelChange)="setRouteMode($event)"
+                  class="route-mode-group"
+                >
+                  @for (mode of routeModes(); track mode.value) {
+                    <mat-button-toggle [value]="mode.value">{{ mode.label }}</mat-button-toggle>
+                  }
+                </mat-button-toggle-group>
+                <strong>{{ route.distanceKm.toFixed(1) }} km</strong>
+                <p>{{ copy().car }} {{ route.driveMinutes }} min • {{ copy().bike }} {{ route.bikeMinutes }} min • {{ copy().walk }} {{ route.walkMinutes }} min</p>
+              </div>
+            }
+
+            @if (routeLoading()) {
+              <p class="route-note">{{ copy().loadingRoute }}</p>
+            }
+
+            @if (routeError()) {
+              <p class="route-note warning">{{ copy().routeFallback }}</p>
+            }
+          </section>
+        }
+      }
+    </aside>
+
+    <section class="map-stage">
+      <div class="map-host" #mapHost></div>
+
+      <div class="map-overlay">
+        <button type="button" (click)="recenter()">{{ copy().recenter }}</button>
+        <button type="button" (click)="fitAll()">{{ copy().showAllHotels }}</button>
+        <button type="button" (click)="toggleLiveTracking()">
+          {{ isTrackingLive() ? copy().stopTracking : copy().trackLive }}
+        </button>
+      </div>
+
+      @if (store.userLocation()) {
+        <div class="you-are-here">{{ copy().youAreHere }}</div>
+      }
+
+      @if (!store.userLocation()) {
+        <div class="permission-banner">
+          <p>{{ copy().allowLocationPrompt }}</p>
+          <button type="button" (click)="useMyLocation()">{{ copy().useMyLocation }}</button>
+          <div class="featured-areas">
+            @for (area of featuredAreas; track area.label) {
+              <button type="button" class="ghost" (click)="chooseFeaturedArea(area.point)">
+                {{ area.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </section>
+  </main>
+</section>
+
+<section class="lower-section">
+  <article class="lower-card">
+    <h3>{{ copy().featuredTitle }}</h3>
+    <p>{{ copy().featuredSubtitle }}</p>
+  </article>
+  <article class="lower-card">
+    <h3>{{ copy().dataTitle }}</h3>
+    <p>{{ copy().dataText }}</p>
+  </article>
+</section>
