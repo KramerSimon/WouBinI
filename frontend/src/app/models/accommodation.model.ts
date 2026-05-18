@@ -1,6 +1,7 @@
-export type HotelCategory = 'all' | 'hotel' | 'bnb' | 'apartment';
-export type SortMode = 'nearest' | 'best-rated' | 'recommended';
+export type HotelCategory = 'all' | 'hotel' | 'bnb' | 'apartment' | 'attraction';
+export type SortMode = 'nearest' | 'best-rated' | 'recommended' | 'summer' | 'winter' | 'year-round';
 export type AppLanguage = 'en' | 'de' | 'it';
+export type ViewMode = 'accommodations' | 'attractions';
 
 export interface GeoPoint {
   lat: number;
@@ -39,6 +40,16 @@ export interface RouteSummary {
 }
 
 export interface AccommodationsResponse {
+  source: 'opendatahub' | 'fallback';
+  language?: AppLanguage;
+  center: GeoPoint;
+  radiusKm: number;
+  total: number;
+  warning?: string;
+  items: Accommodation[];
+}
+
+export interface AttractionsResponse {
   source: 'opendatahub' | 'fallback';
   language?: AppLanguage;
   center: GeoPoint;
