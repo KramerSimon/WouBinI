@@ -38,11 +38,34 @@ interface UiCopy {
   modeDrive: string;
   modeBike: string;
   modeWalk: string;
+  sortNearest: string;
+  sortSummer: string;
+  sortWinter: string;
+  sortYearRound: string;
+  sortBestRated: string;
+  sortRecommended: string;
+  catAll: string;
+  catHotel: string;
+  catBnb: string;
+  catApartment: string;
+  catAttraction: string;
+  tagSummer: string;
+  tagWinter: string;
+  tagYearRound: string;
+  tagCulture: string;
+  tagGastronomy: string;
+  tagShopping: string;
+  tagBreakfast: string;
+  tagParking: string;
+  tagSpa: string;
+  tagKitchen: string;
+  tagLocal: string;
   loadingHotels: string;
   noHotels: string;
   kmAway: string;
   route: string;
   details: string;
+  hideDetails: string;
   selected: string;
   close: string;
   addressUnavailable: string;
@@ -85,11 +108,34 @@ const UI_COPY: Record<AppLanguage, UiCopy> = {
     modeDrive: 'Drive',
     modeBike: 'Bike',
     modeWalk: 'Walk',
+    sortNearest: 'Nearest',
+    sortSummer: 'Summer',
+    sortWinter: 'Winter',
+    sortYearRound: 'Year-round',
+    sortBestRated: 'Best rated',
+    sortRecommended: 'Recommended',
+    catAll: 'All Accommodations',
+    catHotel: 'Hotels',
+    catBnb: 'B&B',
+    catApartment: 'Apartments',
+    catAttraction: 'Attractions',
+    tagSummer: 'Summer',
+    tagWinter: 'Winter',
+    tagYearRound: 'Year-round',
+    tagCulture: 'Culture',
+    tagGastronomy: 'Gastronomy',
+    tagShopping: 'Shopping',
+    tagBreakfast: 'Breakfast',
+    tagParking: 'Parking',
+    tagSpa: 'Spa',
+    tagKitchen: 'Kitchen',
+    tagLocal: 'Local',
     loadingHotels: 'Loading accommodations...',
     noHotels: 'No accommodations found for these filters.',
     kmAway: 'km away',
     route: 'Route',
     details: 'Details',
+    hideDetails: 'Hide Details',
     selected: 'Selected',
     close: 'Close',
     addressUnavailable: 'Address unavailable',
@@ -130,11 +176,34 @@ const UI_COPY: Record<AppLanguage, UiCopy> = {
     modeDrive: 'Auto',
     modeBike: 'Rad',
     modeWalk: 'Zu Fuß',
+    sortNearest: 'In der Nähe',
+    sortSummer: 'Sommer',
+    sortWinter: 'Winter',
+    sortYearRound: 'Ganzjährig',
+    sortBestRated: 'Bestbewertet',
+    sortRecommended: 'Empfohlen',
+    catAll: 'Alle Unterkünfte',
+    catHotel: 'Hotels',
+    catBnb: 'B&B',
+    catApartment: 'Apartments',
+    catAttraction: 'Sehenswürdigkeiten',
+    tagSummer: 'Sommer',
+    tagWinter: 'Winter',
+    tagYearRound: 'Ganzjährig',
+    tagCulture: 'Kultur',
+    tagGastronomy: 'Gastronomie',
+    tagShopping: 'Einkaufen',
+    tagBreakfast: 'Frühstück',
+    tagParking: 'Parkplatz',
+    tagSpa: 'Spa',
+    tagKitchen: 'Küche',
+    tagLocal: 'Lokal',
     loadingHotels: 'Unterkünfte werden geladen...',
     noHotels: 'Für diese Filter wurden keine Unterkünfte gefunden.',
     kmAway: 'km entfernt',
     route: 'Route',
     details: 'Details',
+    hideDetails: 'Details ausblenden',
     selected: 'Ausgewählt',
     close: 'Schließen',
     addressUnavailable: 'Adresse nicht verfügbar',
@@ -175,11 +244,34 @@ const UI_COPY: Record<AppLanguage, UiCopy> = {
     modeDrive: 'Auto',
     modeBike: 'Bici',
     modeWalk: 'A piedi',
+    sortNearest: 'Più vicini',
+    sortSummer: 'Estate',
+    sortWinter: 'Inverno',
+    sortYearRound: 'Tutto l\'anno',
+    sortBestRated: 'Meglio valutati',
+    sortRecommended: 'Consigliati',
+    catAll: 'Tutti gli alloggi',
+    catHotel: 'Hotel',
+    catBnb: 'B&B',
+    catApartment: 'Appartamenti',
+    catAttraction: 'Attrazioni',
+    tagSummer: 'Estate',
+    tagWinter: 'Inverno',
+    tagYearRound: 'Tutto l\'anno',
+    tagCulture: 'Cultura',
+    tagGastronomy: 'Gastronomia',
+    tagShopping: 'Shopping',
+    tagBreakfast: 'Colazione',
+    tagParking: 'Parcheggio',
+    tagSpa: 'Spa',
+    tagKitchen: 'Cucina',
+    tagLocal: 'Locale',
     loadingHotels: 'Caricamento strutture...',
     noHotels: 'Nessuna struttura trovata con questi filtri.',
     kmAway: 'km di distanza',
     route: 'Percorso',
     details: 'Dettagli',
+    hideDetails: 'Nascondi dettagli',
     selected: 'Selezionato',
     close: 'Chiudi',
     addressUnavailable: 'Indirizzo non disponibile',
@@ -230,17 +322,51 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(HotelMapStore);
 
   readonly radii: Array<2 | 5 | 10 | 20> = [2, 5, 10, 20];
-  readonly categoryOptions = [
-    { label: 'All', value: 'all' as const },
-    { label: 'Hotels', value: 'hotel' as const },
-    { label: 'B&B', value: 'bnb' as const },
-    { label: 'Apartments', value: 'apartment' as const }
-  ];
-  readonly sortOptions = [
-    { label: 'Nearest', value: 'nearest' as const },
-    { label: 'Best rated', value: 'best-rated' as const },
-    { label: 'Recommended', value: 'recommended' as const }
-  ];
+  readonly categoryOptions = computed(() => {
+    const c = this.copy();
+    return [
+      { label: c.catAll, value: 'all' as const },
+      { label: c.catHotel, value: 'hotel' as const },
+      { label: c.catBnb, value: 'bnb' as const },
+      { label: c.catApartment, value: 'apartment' as const },
+      { label: c.catAttraction, value: 'attraction' as const }
+    ];
+  });
+  readonly sortOptions = computed(() => {
+    const isAttraction = this.store.isAttractionMode();
+    const c = this.copy();
+    if (isAttraction) {
+      return [
+        { label: c.sortNearest, value: 'nearest' as const },
+        { label: c.sortSummer, value: 'summer' as const },
+        { label: c.sortWinter, value: 'winter' as const },
+        { label: c.sortYearRound, value: 'year-round' as const }
+      ];
+    }
+    return [
+      { label: c.sortNearest, value: 'nearest' as const },
+      { label: c.sortBestRated, value: 'best-rated' as const },
+      { label: c.sortRecommended, value: 'recommended' as const }
+    ];
+  });
+
+  translateTag(tag: string): string {
+    const c = this.copy();
+    const map: Record<string, string> = {
+      Summer: c.tagSummer,
+      Winter: c.tagWinter,
+      'Year-round': c.tagYearRound,
+      Culture: c.tagCulture,
+      Gastronomy: c.tagGastronomy,
+      Shopping: c.tagShopping,
+      Breakfast: c.tagBreakfast,
+      Parking: c.tagParking,
+      Spa: c.tagSpa,
+      Kitchen: c.tagKitchen,
+      Local: c.tagLocal
+    };
+    return map[tag] ?? tag;
+  }
   readonly featuredAreas: Array<{ label: string; point: GeoPoint }> = [
     { label: 'Bolzano', point: { lat: 46.4983, lng: 11.3548 } },
     { label: 'Merano', point: { lat: 46.6696, lng: 11.1596 } },
@@ -256,7 +382,8 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
   readonly routeMode = signal<RouteMode>('driving');
   readonly isLocating = signal(false);
   readonly isTrackingLive = signal(false);
-  readonly detailsOpen = signal(false);
+  readonly expandedHotelId = signal<string | null>(null);
+  readonly routeHotelId = signal<string | null>(null);
   readonly pendingRouteHotelId = signal<string | null>(null);
   readonly routeLoading = signal(false);
   readonly routeError = signal<string | null>(null);
@@ -298,15 +425,21 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
   private dragStartY = 0;
   private dragStartOffset = 0;
   private searchDebounceTimer: number | null = null;
+  private routeDebounceTimer: number | null = null;
 
   constructor() {
     effect(() => {
       const hotels = this.store.hotels();
       const selected = this.store.selectedHotel();
       const userLocation = this.store.userLocation();
-      const mode = this.routeMode();
       this.renderHotels(hotels, selected, userLocation);
-      this.renderRoute(userLocation, selected, mode);
+    });
+
+    effect(() => {
+      const selected = this.store.selectedHotel();
+      const userLocation = this.store.userLocation();
+      const mode = this.routeMode();
+      this.scheduleRenderRoute(userLocation, selected, mode);
     });
   }
 
@@ -319,6 +452,9 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.searchDebounceTimer) {
       window.clearTimeout(this.searchDebounceTimer);
+    }
+    if (this.routeDebounceTimer) {
+      window.clearTimeout(this.routeDebounceTimer);
     }
     this.stopLocationWatch();
     this.map?.remove();
@@ -339,11 +475,19 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        this.isLocating.set(false);
+
+        if (position.coords.accuracy > 10000) {
+          this.store.error.set('Location too inaccurate. Showing accommodations around Bolzano.');
+          this.pendingRouteHotelId.set(null);
+          this.store.loadHotels();
+          return;
+        }
+
         const point = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        this.isLocating.set(false);
         this.store.setUserLocation(point);
         this.store.loadHotels();
         this.flyTo(point, 12);
@@ -354,8 +498,7 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
           const pendingHotel = this.store.hotels().find((hotel) => hotel.id === pendingHotelId);
           if (pendingHotel) {
             this.selectHotel(pendingHotel);
-            this.detailsOpen.set(true);
-            this.scrollDetailsIntoView();
+            this.routeHotelId.set(pendingHotelId);
           }
           this.pendingRouteHotelId.set(null);
         }
@@ -394,12 +537,12 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
     this.store.loadHotels();
   }
 
-  onCategoryChange(category: 'all' | 'hotel' | 'bnb' | 'apartment'): void {
+  onCategoryChange(category: 'all' | 'hotel' | 'bnb' | 'apartment' | 'attraction'): void {
     this.store.setCategory(category);
     this.store.loadHotels();
   }
 
-  onSortChange(sort: 'nearest' | 'best-rated' | 'recommended'): void {
+  onSortChange(sort: 'nearest' | 'best-rated' | 'recommended' | 'summer' | 'winter' | 'year-round'): void {
     this.store.setSort(sort);
     this.store.loadHotels();
   }
@@ -425,14 +568,22 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
     this.revealHotelMarker(hotel.id);
   }
 
+  toggleDetails(hotel: Accommodation): void {
+    if (this.expandedHotelId() === hotel.id) {
+      this.expandedHotelId.set(null);
+    } else {
+      this.selectHotel(hotel);
+      this.expandedHotelId.set(hotel.id);
+    }
+  }
+
   openDetails(hotel: Accommodation): void {
     this.selectHotel(hotel);
-    this.detailsOpen.set(true);
     this.scrollDetailsIntoView();
   }
 
   closeDetails(): void {
-    this.detailsOpen.set(false);
+    this.routeHotelId.set(null);
   }
 
   toggleLiveTracking(): void {
@@ -450,17 +601,19 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
   }
 
   routeToHotel(hotel: Accommodation): void {
-    this.selectHotel(hotel);
-    this.detailsOpen.set(true);
-
-    if (this.store.userLocation()) {
-      this.scrollDetailsIntoView();
+    if (this.routeHotelId() === hotel.id) {
+      this.routeHotelId.set(null);
       return;
     }
 
-    this.pendingRouteHotelId.set(hotel.id);
-    this.store.error.set('Allow location to draw route from your position.');
-    this.useMyLocation();
+    this.selectHotel(hotel);
+    this.routeHotelId.set(hotel.id);
+
+    if (!this.store.userLocation()) {
+      this.pendingRouteHotelId.set(hotel.id);
+      this.store.error.set('Allow location to draw route from your position.');
+      this.useMyLocation();
+    }
   }
 
   recenter(): void {
@@ -576,11 +729,17 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        this.isLocating.set(false);
+
+        if (position.coords.accuracy > 10000) {
+          this.store.loadHotels();
+          return;
+        }
+
         const point = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        this.isLocating.set(false);
         this.store.setUserLocation(point);
         this.store.loadHotels();
         this.flyTo(point, 12);
@@ -606,6 +765,9 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
 
     this.geolocationWatchId = navigator.geolocation.watchPosition(
       (position) => {
+        if (position.coords.accuracy > 10000) {
+          return;
+        }
         const point = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
@@ -721,6 +883,15 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
     marker.openTooltip();
   }
 
+  private scheduleRenderRoute(user: GeoPoint | null, selected: Accommodation | null, mode: RouteMode): void {
+    if (this.routeDebounceTimer) {
+      window.clearTimeout(this.routeDebounceTimer);
+    }
+    this.routeDebounceTimer = window.setTimeout(() => {
+      this.renderRoute(user, selected, mode);
+    }, 400);
+  }
+
   private renderRoute(user: GeoPoint | null, selected: Accommodation | null, mode: RouteMode): void {
     this.routeLayer.clearLayers();
     this.routeError.set(null);
@@ -794,16 +965,28 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
     selected: Accommodation,
     mode: RouteMode
   ): Promise<L.LatLngExpression[]> {
-    const url = new URL(
-      `https://router.project-osrm.org/route/v1/${mode}/${user.lng},${user.lat};${selected.lng},${selected.lat}`
-    );
-    url.searchParams.set('overview', 'full');
-    url.searchParams.set('geometries', 'geojson');
+    const ORS_API_KEY = 'DEIN_API_KEY_HIER';
 
-    const response = await fetch(url.toString(), {
+    const orsProfile =
+      mode === 'driving' ? 'driving-car' :
+      mode === 'cycling' ? 'cycling-regular' :
+      'foot-walking';
+
+    const url = `https://api.openrouteservice.org/v2/directions/${orsProfile}/geojson`;
+
+    const response = await fetch(url, {
+      method: 'POST',
       headers: {
-        Accept: 'application/json'
-      }
+        'Accept': 'application/json, application/geo+json',
+        'Content-Type': 'application/json',
+        'Authorization': ORS_API_KEY
+      },
+      body: JSON.stringify({
+        coordinates: [
+          [user.lng, user.lat],
+          [selected.lng, selected.lat]
+        ]
+      })
     });
 
     if (!response.ok) {
@@ -811,7 +994,7 @@ export class HotelMapPageComponent implements AfterViewInit, OnDestroy {
     }
 
     const payload = await response.json();
-    const coordinates = payload?.routes?.[0]?.geometry?.coordinates;
+    const coordinates = payload?.features?.[0]?.geometry?.coordinates;
 
     if (!Array.isArray(coordinates) || coordinates.length < 2) {
       throw new Error('Routing response missing geometry coordinates');

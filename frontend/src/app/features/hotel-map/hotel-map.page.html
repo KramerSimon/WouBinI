@@ -1,16 +1,17 @@
-<section class="hero-section">
-  <div class="hero-card">
-    <p class="hero-kicker">WouBinI</p>
-    <h2>{{ copy().heroTitle }}</h2>
-    <p>{{ copy().heroSubtitle }}</p>
-    <div class="hero-actions">
-      <button type="button" (click)="useMyLocation()" [disabled]="isLocating()">
-        {{ isLocating() ? copy().locating : copy().heroCta }}
-      </button>
-      <a href="#map-app">Open map app</a>
+@if (!store.userLocation()) {
+  <section class="hero-section">
+    <div class="hero-card">
+      <p class="hero-kicker">WouBinI</p>
+      <h2>{{ copy().heroTitle }}</h2>
+      <p>{{ copy().heroSubtitle }}</p>
+      <div class="hero-actions">
+        <button type="button" (click)="useMyLocation()" [disabled]="isLocating()">
+          {{ isLocating() ? copy().locating : copy().heroCta }}
+        </button>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+}
 
 <section class="hotel-app" id="map-app">
   <header class="topbar">
@@ -33,8 +34,8 @@
     </div>
 
     <div class="actions">
-      <button type="button" class="ghost" (click)="useMyLocation()" [disabled]="isLocating()">
-        {{ isLocating() ? copy().locating : copy().useMyLocation }}
+      <button type="button" class="ghost" (click)="isTrackingLive() ? toggleLiveTracking() : useMyLocation()" [disabled]="isLocating()">
+        {{ isLocating() ? copy().locating : isTrackingLive() ? copy().stopTracking : copy().useMyLocation }}
       </button>
       <button type="button" class="ghost" (click)="cycleLanguage()">{{ languageLabel() }}</button>
       <button type="button" class="ghost mobile-only" (click)="openMobileFilters()">{{ copy().filters }}</button>
@@ -78,7 +79,7 @@
           <mat-form-field appearance="outline" class="compact-field">
             <mat-label>{{ copy().category }}</mat-label>
             <mat-select [ngModel]="store.filters().category" (ngModelChange)="onCategoryChange($event)">
-              @for (option of categoryOptions; track option.value) {
+              @for (option of categoryOptions(); track option.value) {
                 <mat-option [value]="option.value">{{ option.label }}</mat-option>
               }
             </mat-select>
@@ -87,7 +88,7 @@
           <mat-form-field appearance="outline" class="compact-field">
             <mat-label>{{ copy().sort }}</mat-label>
             <mat-select [ngModel]="store.filters().sort" (ngModelChange)="onSortChange($event)">
-              @for (option of sortOptions; track option.value) {
+              @for (option of sortOptions(); track option.value) {
                 <mat-option [value]="option.value">{{ option.label }}</mat-option>
               }
             </mat-select>
@@ -127,60 +128,68 @@
             </div>
             <div class="tags">
               @for (tag of hotel.tags; track tag) {
-                <span>{{ tag }}</span>
+                <span>{{ translateTag(tag) }}</span>
               }
             </div>
             <div class="card-actions">
-              <button type="button" (click)="routeToHotel(hotel); $event.stopPropagation()">{{ copy().route }}</button>
-              <button type="button" class="ghost" (click)="openDetails(hotel); $event.stopPropagation()">{{ copy().details }}</button>
+              <button
+                type="button"
+                [class.ghost]="routeHotelId() !== hotel.id"
+                [class.details-active]="routeHotelId() === hotel.id"
+                (click)="routeToHotel(hotel); $event.stopPropagation()"
+              >{{ copy().route }}</button>
+              <button
+                type="button"
+                [class.ghost]="expandedHotelId() !== hotel.id"
+                [class.details-active]="expandedHotelId() === hotel.id"
+                (click)="toggleDetails(hotel); $event.stopPropagation()"
+              >
+                {{ expandedHotelId() === hotel.id ? copy().hideDetails : copy().details }}
+              </button>
             </div>
             @if (store.selectedHotelId() === hotel.id) {
               <span class="selected-pill">{{ copy().selected }}</span>
             }
-          </article>
-        }
-      </section>
 
-      @if (detailsOpen()) {
-        @if (selectedHotel(); as selected) {
-          <section class="details-drawer" #detailsDrawer>
-            <div class="details-header">
-              <h3>{{ selected.name }}</h3>
-              <button type="button" class="ghost" (click)="closeDetails()">{{ copy().close }}</button>
-            </div>
-            <p>{{ selected.address || copy().addressUnavailable }}</p>
-            <p>{{ selected.description || copy().descriptionUnavailable }}</p>
-            <p>{{ selected.phone || copy().phoneUnavailable }}</p>
-            @if (selected.website) {
-              <p><a [href]="selected.website" target="_blank" rel="noreferrer">{{ copy().website }}</a></p>
-            }
-
-            @if (routeSummary(); as route) {
-              <div class="route-summary">
-                <mat-button-toggle-group
-                  [ngModel]="routeMode()"
-                  (ngModelChange)="setRouteMode($event)"
-                  class="route-mode-group"
-                >
-                  @for (mode of routeModes(); track mode.value) {
-                    <mat-button-toggle [value]="mode.value">{{ mode.label }}</mat-button-toggle>
-                  }
-                </mat-button-toggle-group>
-                <strong>{{ route.distanceKm.toFixed(1) }} km</strong>
-                <p>{{ copy().car }} {{ route.driveMinutes }} min • {{ copy().bike }} {{ route.bikeMinutes }} min • {{ copy().walk }} {{ route.walkMinutes }} min</p>
+            @if (expandedHotelId() === hotel.id) {
+              <div class="inline-details" (click)="$event.stopPropagation()">
+                <p>{{ hotel.address || copy().addressUnavailable }}</p>
+                <p>{{ hotel.description || copy().descriptionUnavailable }}</p>
+                <p>{{ hotel.phone || copy().phoneUnavailable }}</p>
+                @if (hotel.website) {
+                  <p><a [href]="hotel.website" target="_blank" rel="noreferrer">{{ copy().website }}</a></p>
+                }
               </div>
             }
 
-            @if (routeLoading()) {
-              <p class="route-note">{{ copy().loadingRoute }}</p>
+            @if (routeHotelId() === hotel.id) {
+              <div class="inline-details" (click)="$event.stopPropagation()">
+                @if (routeSummary(); as route) {
+                  <div class="route-summary">
+                    <mat-button-toggle-group
+                      [ngModel]="routeMode()"
+                      (ngModelChange)="setRouteMode($event)"
+                      class="route-mode-group"
+                    >
+                      @for (mode of routeModes(); track mode.value) {
+                        <mat-button-toggle [value]="mode.value">{{ mode.label }}</mat-button-toggle>
+                      }
+                    </mat-button-toggle-group>
+                    <strong>{{ route.distanceKm.toFixed(1) }} km</strong>
+                    <p>{{ copy().car }} {{ route.driveMinutes }} min • {{ copy().bike }} {{ route.bikeMinutes }} min • {{ copy().walk }} {{ route.walkMinutes }} min</p>
+                  </div>
+                }
+                @if (routeLoading()) {
+                  <p class="route-note">{{ copy().loadingRoute }}</p>
+                }
+                @if (routeError()) {
+                  <p class="route-note warning">{{ copy().routeFallback }}</p>
+                }
+              </div>
             }
-
-            @if (routeError()) {
-              <p class="route-note warning">{{ copy().routeFallback }}</p>
-            }
-          </section>
+          </article>
         }
-      }
+      </section>
     </aside>
 
     <section class="map-stage">

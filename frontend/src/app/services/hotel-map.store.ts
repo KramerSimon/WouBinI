@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Accommodation, AppLanguage, FilterState, GeoPoint } from '../models/accommodation.model';
 import { HotelsApiService } from './hotels-api.service';
+import { AttractionsApiService } from './attractions-api.service';
 
 const DEFAULT_CENTER: GeoPoint = { lat: 46.4983, lng: 11.3548 };
 
@@ -32,10 +33,15 @@ export class HotelMapStore {
 
   readonly hotelCountLabel = computed(() => {
     const total = this.hotels().length;
-    return `${total} ${total === 1 ? 'hotel' : 'hotels'} nearby`;
+    return `${total} ${total === 1 ? 'result' : 'results'} nearby`;
   });
 
-  constructor(private readonly api: HotelsApiService) {}
+  readonly isAttractionMode = computed(() => this.filters().category === 'attraction');
+
+  constructor(
+    private readonly api: HotelsApiService,
+    private readonly attractionsApi: AttractionsApiService
+  ) {}
 
   setUserLocation(point: GeoPoint): void {
     this.userLocation.set(point);
@@ -59,7 +65,18 @@ export class HotelMapStore {
   }
 
   setCategory(category: FilterState['category']): void {
-    this.filters.update((prev) => ({ ...prev, category }));
+    if (category === 'attraction') {
+      this.filters.update((prev) => ({ ...prev, category, sort: 'nearest' }));
+    } else {
+      // Reset season sorts when switching back to accommodations
+      const currentSort = this.filters().sort;
+      const isSeasonSort = ['summer', 'winter', 'year-round'].includes(currentSort);
+      this.filters.update((prev) => ({
+        ...prev,
+        category,
+        sort: isSeasonSort ? 'nearest' : currentSort
+      }));
+    }
   }
 
   setSort(sort: FilterState['sort']): void {
@@ -78,7 +95,11 @@ export class HotelMapStore {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.getNearbyHotels(center, filters, language, limit).subscribe({
+    const request$ = filters.category === 'attraction'
+      ? this.attractionsApi.getNearbyAttractions(center, filters, language, limit)
+      : this.api.getNearbyHotels(center, filters, language, limit);
+
+    request$.subscribe({
       next: (response) => {
         this.hotels.set(response.items);
         this.source.set(response.source);
@@ -92,7 +113,6 @@ export class HotelMapStore {
 
         const currentSelected = this.selectedHotelId();
         const stillExists = response.items.some((hotel) => hotel.id === currentSelected);
-        // Keep the previous selection when possible to avoid jarring map jumps.
         if (currentSelected && stillExists) {
           return;
         }
@@ -101,7 +121,7 @@ export class HotelMapStore {
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('Could not load accommodations. Please try again.');
+        this.error.set('Could not load results. Please try again.');
       }
     });
   }
